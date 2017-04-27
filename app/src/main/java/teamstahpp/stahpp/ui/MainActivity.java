@@ -1,4 +1,4 @@
-package teamstahpp.stahpp;
+package teamstahpp.stahpp.ui;
 
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -14,9 +14,10 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import teamstahpp.stahpp.R;
 
 public class MainActivity extends AppCompatActivity {
     ListView listview ;
