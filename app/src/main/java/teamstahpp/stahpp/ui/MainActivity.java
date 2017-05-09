@@ -1,115 +1,87 @@
 package teamstahpp.stahpp.ui;
 
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.support.v7.app.AppCompatActivity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.SparseBooleanArray;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import teamstahpp.stahpp.R;
 
+/**
+ * Created by ISR on 02-May-17.
+ */
+
 public class MainActivity extends AppCompatActivity {
-    ListView listview ;
-    ArrayList<String> listViewItems = new ArrayList<String>();
-    List<PackageInfo> allPacks = new ArrayList<PackageInfo>();
-    SparseBooleanArray sparseBooleanArray ;
+
+    Boolean firstTime=false;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        PackageManager pm = getPackageManager();
-        List<PackageInfo> packs = pm.getInstalledPackages(0);
-        //List<ApplicationInfo> apps = pm.getInstalledApplications(0);
-        List<ApplicationInfo> installedApps = new ArrayList<ApplicationInfo>();
-        //List<String> installedAppsStr = new ArrayList<String>();
-        for(PackageInfo pack : packs) {
-            ApplicationInfo app = pack.applicationInfo;
-            //checks for flags; if flagged, check if updated system app
-            if((app.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0) {
-                installedApps.add(app);
-                //it's a system app, not interested
-            } else if ((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
-                //Discard this one
-                //in this case, it should be a user-installed app
-                String label = (String)pm.getApplicationLabel(app);
-                listViewItems.add(label);
-                allPacks.add(pack);
+        final String PREFS_NAME = "MyPrefsFile";
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        if (settings.getBoolean("my_first_time", true)) {
+            firstTime=true;
+            //the app is being launched for first time:
+            // Display the fragment as the main content.
+            setContentView(R.layout.settings_container);
+            getFragmentManager().beginTransaction().add(R.id.settings_layout, new SettingsFragment()).commit();
+            //  getFragmentManager().beginTransaction().replace(android.R.id.content, new SettingsFragment()).commit();
+            Toolbar myToolbar = (Toolbar) findViewById(R.id.complete_toolbar);
+            setSupportActionBar(myToolbar);
 
-            } else {
-                installedApps.add(app);
-            }
+            Log.d("Comments", "First time");
+            // first time task
+            // record the fact that the app has been started at least once
+            settings.edit().putBoolean("my_first_time", false).commit();
+        }else{
+            Intent intent = new Intent(this, Main2Activity.class);
+            startActivity(intent);
+            //setContentView(R.layout.activity_main);
+           /* Toolbar myToolbar = (Toolbar) findViewById(R.id.complete_toolbar);
+            setSupportActionBar(myToolbar);*/
         }
-        listview = (ListView)findViewById(R.id.listView);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>
-                (MainActivity.this,
-                        android.R.layout.simple_list_item_multiple_choice,
-                        android.R.id.text1, listViewItems );
-
-        listview.setAdapter(adapter);
-
-        listview.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // TODO Auto-generated method stub
-
-                sparseBooleanArray = listview.getCheckedItemPositions();
-
-                String ValueHolder = "" ;
-
-                int i = 0 ;
-
-                while (i < sparseBooleanArray.size()) {
-
-                    if (sparseBooleanArray.valueAt(i)) {
-
-                        ValueHolder += listViewItems.get(sparseBooleanArray.keyAt(i)) + ",";
-                    }
-
-                    i++ ;
-                }
-
-                ValueHolder = ValueHolder.replaceAll("(,)*$", "");
-
-                Toast.makeText(MainActivity.this, "ListView Selected Values = " + ValueHolder, Toast.LENGTH_LONG).show();
-
-            }
-        });
-
-        Button submit = (Button)findViewById(R.id.button3);
-
-        submit.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View viewParam) {
-                submit();
-            }
-        });
     }
-    public void submit() {
-        sparseBooleanArray = listview.getCheckedItemPositions();
-
-        ArrayList<String> selectedPacks = new ArrayList<String>();
-        int i = 0;
-        while(i < sparseBooleanArray.size())
-        {
-            if(sparseBooleanArray.valueAt(i)) {
-                selectedPacks.add(allPacks.get(sparseBooleanArray.keyAt(i)).packageName);
-            }
-            i++;
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.complete_toolbar_menu, menu);
+        return true;
+    }
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (firstTime) {
+            MenuItem itemDone = menu.findItem(R.id.action_done);
+            itemDone.setVisible(true);
+            MenuItem itemSettings = menu.findItem(R.id.action_settings);
+            itemSettings.setVisible(false);
         }
-        Intent intent = new Intent(this, Main2Activity.class);
-        intent.putStringArrayListExtra("packagelist", selectedPacks);
-        startActivity(intent);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.action_done:
+                Intent intentMain = new Intent(this, MainActivity.class);
+                startActivity(intentMain);
+                return true;
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+        }
     }
 }
+
